@@ -122,12 +122,30 @@ FS.Store.S3 = function(name, options) {
       return fileObj.collectionName + '/' + fileObj._id + '-' + (filenameInStore || filename);
     },
     createReadStream: function(fileKey, options) {
-
-      return S3.createReadStream({
-        Bucket: bucket,
-        Key: folder + fileKey
-      });
-
+      // Create a readable stream for passing the data back from S3 and ignoring any errors that
+      // take place initially while the data has not yet been processed.
+      var Readable = Npm.require('stream').Readable;
+      var out = new Readable();
+      out._read = function() {
+      };
+      var startStream = function() {
+        var stream = S3.createReadStream({
+          Bucket: bucket,
+          Key: folder + fileKey
+        });
+        stream.on('error', function(err) {
+          // Ignore errors and try again after a delay.
+          setTimeout(startStream, 1000);
+        });
+        stream.on('data', function(data) {
+          out.push(data);
+        });
+        stream.on('end', function() {
+          out.push(null);
+        });
+      };
+      startStream();
+      return out;
     },
     // Comment to documentation: Set options.ContentLength otherwise the
     // indirect stream will be used creating extra overhead on the filesystem.
