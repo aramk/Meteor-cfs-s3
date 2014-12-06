@@ -128,14 +128,18 @@ FS.Store.S3 = function(name, options) {
       var out = new Readable();
       out._read = function() {
       };
+      var freq = 1000,
+        triesLeft = 60;
       var startStream = function() {
         var stream = S3.createReadStream({
           Bucket: bucket,
           Key: folder + fileKey
         });
         stream.on('error', function(err) {
+          if (triesLeft <= 0) return;
           // Ignore errors and try again after a delay.
-          setTimeout(startStream, 1000);
+          setTimeout(startStream, freq);
+          triesLeft--;
         });
         stream.on('data', function(data) {
           out.push(data);
