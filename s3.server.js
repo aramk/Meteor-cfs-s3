@@ -123,7 +123,7 @@ FS.Store.S3 = function(name, options) {
     },
     createReadStream: function(fileKey, options) {
       options = _.extend({
-        tries: 10,
+        tries: 3,
         tryFreq: 1000
       }, options);
       // Create a readable stream for passing the data back from S3 and ignoring any errors that
