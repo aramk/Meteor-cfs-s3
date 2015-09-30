@@ -122,23 +122,33 @@ FS.Store.S3 = function(name, options) {
       return fileObj.collectionName + '/' + fileObj._id + '-' + (filenameInStore || filename);
     },
     createReadStream: function(fileKey, options) {
+      options = _.extend({
+        tries: 10,
+        tryFreq: 1000
+      }, options);
       // Create a readable stream for passing the data back from S3 and ignoring any errors that
       // take place initially while the data has not yet been processed.
       var Readable = Npm.require('stream').Readable;
       var out = new Readable();
-      out._read = function() {
-      };
-      var freq = 1000,
-        triesLeft = 60;
+      out._read = function() {};
+      var tryFreq = options.tryFreq;
+      var triesLeft = options.tries;
       var startStream = function() {
+        var key = folder + fileKey;
         var stream = S3.createReadStream({
           Bucket: bucket,
-          Key: folder + fileKey
+          Key: key
         });
         stream.on('error', function(err) {
-          if (triesLeft <= 0) return;
+          if (triesLeft <= 0) {
+            var error = new Error('Failed to download file ' + key + ' from S3 bucket ' + bucket);
+            console.error(error.message);
+            out.emit('error', error);
+            out.push(null);
+            return;
+          }
           // Ignore errors and try again after a delay.
-          setTimeout(startStream, freq);
+          setTimeout(startStream, tryFreq);
           triesLeft--;
         });
         stream.on('data', function(data) {
