@@ -69,6 +69,7 @@ FS.Store.S3 = function(name, options) {
     throw new Error('FS.Store.S3 missing keyword "new"');
 
   options = options || {};
+  var origOptions = _.clone(options);
 
   // Determine which folder (key prefix) in the bucket to use
   var folder = options.folder;
@@ -119,7 +120,7 @@ FS.Store.S3 = function(name, options) {
       var filename = fileObj.name();
       var filenameInStore = fileObj.name({store: name});
 
-      if (options.fileKey) {
+      if (origOptions.fileKey) {
         return options.fileKey(fileObj, {
           name: name, info: info
         });
@@ -132,7 +133,7 @@ FS.Store.S3 = function(name, options) {
       options = _.extend({
         tries: 3,
         tryFreq: 1000
-      }, options);
+      }, origOptions, options);
       // Create a readable stream for passing the data back from S3 and ignoring any errors that
       // take place initially while the data has not yet been processed.
       var Readable = Npm.require('stream').Readable;
@@ -191,8 +192,8 @@ FS.Store.S3 = function(name, options) {
         Bucket: bucket,
         Key: folder + fileKey,
         fileKey: fileKey,
-        ACL: defaultAcl
-      }, options);
+        ACL: defaultAcl,
+      }, origOptions, options);
 
       return S3.createWriteStream(options);
     },

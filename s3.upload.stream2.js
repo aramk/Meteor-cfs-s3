@@ -34,6 +34,26 @@ AWS.S3.prototype.createWriteStream = function(params, options) {
   // This small function stops the write stream until we have connected with
   // the s3 server
   var runWhenReady = function(callback) {
+    callback = _.wrap(callback, function(origCallback) {
+      // Replace existing keys before upload.
+      if (params.replaceExisting) {
+        if (FS.debug) {
+          console.log('SA S3 - Deleting existing object', params);
+        }
+        S3.deleteObject({
+          Bucket: params.Bucket,
+          Key: params.Key
+        }, function() {
+          if (FS.debug) {
+            console.log('SA S3 - Deleted existing object', params);
+          }
+          origCallback();
+        });
+      } else {
+        origCallback();
+      }
+    });
+
     // If we dont have a upload id we are not ready
     if (multipartUploadID === null) {
       // We set the waiting callback
