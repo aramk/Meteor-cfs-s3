@@ -58,6 +58,7 @@ var validS3PutParamKeys = [
  * @param {Function} [options.beforeSave] - Function to run before saving a file from the server. The context of the function will be the `FS.File` instance we're saving. The function may alter its properties.
  * @param {Function} [options.fileKey] - Function which returns the file key to use for the given `FS.File` and an object containing the file `info` and `name` of the store.
  * @param {Number} [options.maxTries=5] - Max times to attempt saving a file
+ * @param {Boolean} [options.replaceExisting=false] - Whether to replace any existing objects with a matching key before uploading. Useful if options.fileKey isn't unique across uploads.
  * @returns {FS.StorageAdapter} An instance of FS.StorageAdapter.
  *
  * Creates an S3 store instance on the server. Inherits from FS.StorageAdapter
