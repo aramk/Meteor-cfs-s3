@@ -58,7 +58,6 @@ var validS3PutParamKeys = [
  * @param {Function} [options.beforeSave] - Function to run before saving a file from the server. The context of the function will be the `FS.File` instance we're saving. The function may alter its properties.
  * @param {Function} [options.fileKey] - Function which returns the file key to use for the given `FS.File` and an object containing the file `info` and `name` of the store.
  * @param {Number} [options.maxTries=5] - Max times to attempt saving a file
- * @param {Boolean} [options.replaceExisting=false] - Whether to replace any existing objects with a matching key before uploading. Useful if options.fileKey isn't unique across uploads.
  * @returns {FS.StorageAdapter} An instance of FS.StorageAdapter.
  *
  * Creates an S3 store instance on the server. Inherits from FS.StorageAdapter
@@ -70,7 +69,6 @@ FS.Store.S3 = function(name, options) {
     throw new Error('FS.Store.S3 missing keyword "new"');
 
   options = options || {};
-  var origOptions = _.clone(options);
 
   // Determine which folder (key prefix) in the bucket to use
   var folder = options.folder;
@@ -121,7 +119,7 @@ FS.Store.S3 = function(name, options) {
       var filename = fileObj.name();
       var filenameInStore = fileObj.name({store: name});
 
-      if (origOptions.fileKey) {
+      if (options.fileKey) {
         return options.fileKey(fileObj, {
           name: name, info: info
         });
@@ -134,7 +132,7 @@ FS.Store.S3 = function(name, options) {
       options = _.extend({
         tries: 3,
         tryFreq: 1000
-      }, origOptions, options);
+      }, options);
       // Create a readable stream for passing the data back from S3 and ignoring any errors that
       // take place initially while the data has not yet been processed.
       var Readable = Npm.require('stream').Readable;
@@ -193,8 +191,8 @@ FS.Store.S3 = function(name, options) {
         Bucket: bucket,
         Key: folder + fileKey,
         fileKey: fileKey,
-        ACL: defaultAcl,
-      }, origOptions, options);
+        ACL: defaultAcl
+      }, options);
 
       return S3.createWriteStream(options);
     },
