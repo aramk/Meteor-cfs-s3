@@ -1,9 +1,8 @@
 Package.describe({
-  git: 'https://github.com/CollectionFS/Meteor-cfs-s3.git',
   name: 'cfs:s3',
-  version: '0.1.3',
+  version: '0.1.4',
   summary: "Amazon Web Services S3 storage adapter for CollectionFS",
-  git: "https://github.com/CollectionFS/Meteor-cfs-s3.git"
+  git: "https://github.com/CollectionFS/Meteor-CollectionFS/tree/master/packages/s3"
 });
 
 Npm.depends({
@@ -17,11 +16,7 @@ Npm.depends({
 Package.onUse(function(api) {
   api.versionsFrom('1.0');
 
-  api.use([
-    'underscore',
-    'cfs:base-package@0.0.28',
-    'cfs:storage-adapter@0.2.1'
-  ]);
+  api.use(['cfs:base-package@0.0.30', 'cfs:storage-adapter@0.2.1']);
   api.addFiles([
     's3.server.js',
     // 's3.indirect.streaming.js',

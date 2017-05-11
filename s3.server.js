@@ -56,7 +56,6 @@ var validS3PutParamKeys = [
  * @param {String} [options.ACL='private'] - ACL for objects when putting
  * @param {String} [options.folder='/'] - Which folder (key prefix) in the bucket to use
  * @param {Function} [options.beforeSave] - Function to run before saving a file from the server. The context of the function will be the `FS.File` instance we're saving. The function may alter its properties.
- * @param {Function} [options.fileKey] - Function which returns the file key to use for the given `FS.File` and an object containing the file `info` and `name` of the store.
  * @param {Number} [options.maxTries=5] - Max times to attempt saving a file
  * @returns {FS.StorageAdapter} An instance of FS.StorageAdapter.
  *
@@ -116,14 +115,24 @@ FS.Store.S3 = function(name, options) {
       // If the store and key is found return the key
       if (info && info.key) return info.key;
 
+      // Support explicit fileKey function in options
+      //   eg: set to save as just this filename
+      //   fileKey: function(fileObj) { return { fileKey: fileObj.name() }; }
+      //   eg: set to save as just the fileObj._id
+      //   fileKey: function(fileObj) { return { fileKey: fileObj._id }; }
+      //   eg: set to save as a path: <_id>/<name>
+      //   fileKey: function(fileObj) { return { fileKey: fileObj._id + '/' + fileObj.name() }; }
+      if (options && options.fileKey && typeof options.fileKey === 'function') {
+        return options.fileKey(fileObj);
+      }
+      // Support for an extension on the fileObj itself
+      if (fileObj && fileObj.fileKey) {
+        if (typeof fileObj.fileKey === 'string') return fileObj.fileKey;
+        if (typeof fileObj.fileKey === 'function') return fileObj.fileKey();
+      }
+
       var filename = fileObj.name();
       var filenameInStore = fileObj.name({store: name});
-
-      if (options.fileKey) {
-        return options.fileKey(fileObj, {
-          name: name, info: info
-        });
-      }
 
       // If no store key found we resolve / generate a key
       return fileObj.collectionName + '/' + fileObj._id + '-' + (filenameInStore || filename);
